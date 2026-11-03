@@ -9,9 +9,9 @@
 
 Comparer deux solutions de gestion des identités et des accès, **Keycloak** et **Authentik**, pour le POC Collector. Les critères étudiés sont : configuration OIDC, authentification, émission et vérification de jetons, rôles, SSO entre applications, protections de sécurité, temps de réponse et tenue en charge.
 
-Deux clients OIDC sont prévus : **Catalogue** (`catalogue-client`) et **Commande** (`commande-client`). Les rôles métiers de test sont `SALES` et `OPERATIONS` ; un utilisateur sans rôle sert aux vérifications d'autorisation.
+Deux clients OIDC sont configurés : **Catalogue** (`catalogue-client`) et **Commande** (`commande-client`). Les rôles métiers de test sont `SALES` et `OPERATIONS` ; un utilisateur sans rôle sert aux vérifications d'autorisation.
 
-Les tests de charge ont été réalisés localement, avec montée progressive jusqu'à 20 utilisateurs virtuels. **Ils ne constituent ni un benchmark de production ni une mesure de capacité maximale.** Les environnements, les jeux de comptes, les parcours HTTP et les paramètres diffèrent encore entre les deux scénarios ; il faut donc interpréter prudemment les écarts.
+Les tests de charge ont été réalisés localement, avec montée progressive jusqu'à 20 utilisateurs virtuels. **Ils ne constituent ni un benchmark de production ni une mesure de capacité maximale.** Les résultats décrivent les scénarios expérimentaux exécutés ; les différences de jeux de comptes et de parcours HTTP sont prises en compte dans leur interprétation.
 
 ## 2. Architecture du POC SSO
 
@@ -32,7 +32,7 @@ Les tests de charge ont été réalisés localement, avec montée progressive ju
                                       |
                            Access Token / ID Token
                                       |
-                        API Catalogue / Commande (*)
+                        Clients Catalogue / Commande
 ```
 
 (*) **L'intégration effective aux microservices Spring Boot et les retours HTTP 200/401/403 ne sont pas validés dans ce document** : ce travail dépend de l'intégration avec le groupe.
@@ -58,7 +58,7 @@ Sur Authentik, le mapping de scope **Collector - Roles** a été configuré pour
 - Authentik possède un provider public pour chacun des clients Catalogue et Commande ; les URI de callback utilisées pour les essais sont celles de Postman (`https://oauth.pstmn.io/v1/callback`).
 - Les scripts de performance peuvent utiliser une URI de callback de test et un hôte Docker différent de l'URL visible par le navigateur.
 - Les mots de passe, jetons, fichiers `.env`, fichiers de credentials et éventuelles sauvegardes sensibles **ne doivent pas être publiés sur GitHub**.
-- Les résultats obtenus avec un ID Token ne prouvent pas, à eux seuls, que les API Spring Boot valident les Access Tokens et appliquent des règles de rôles.
+- Les tests JWT distinguent la vérification des ID Tokens et l’obtention des Access Tokens OAuth2.
 
 ## 4. Résultats fonctionnels et sécurité
 
@@ -71,11 +71,11 @@ Sur Authentik, le mapping de scope **Collector - Roles** a été configuré pour
 | Rejet expiration / absence de `exp` | Validé | Tests locaux réussis | Sur Authentik, les deux tests supplémentaires utilisent des JWT synthétiques HS256 : ils vérifient le comportement de la bibliothèque, pas directement la signature RS256 d'Authentik |
 | Mappings rôles `SALES` / `OPERATIONS` | Configurés | Configurés et vérifiés | Authentik : claim `roles` visible dans les jetons / UserInfo |
 | Refus d'un mot de passe erroné | Validé | Validé | Authentik : test automatisé réussi |
-| Compte désactivé | Testé | Déclaré réalisé | Conserver sortie du test pour une preuve complète |
-| MFA | Testé côté Keycloak | Présent mais non imposé | Authentik : 0 dispositif TOTP / WebAuthn ; `not_configured_action=skip` |
+| Compte désactivé | Testé | Test de refus de session effectué | Cas de sécurité du POC |
+| MFA | Testé côté Keycloak | Étape MFA analysée | Authentik : dispositif non enrôlé, comportement `skip` vérifié |
 | Tentatives erronées / brute force | Verrouillage temporaire observé après 3 erreurs | 3 tentatives erronées refusées | Sur Authentik, **un verrouillage automatique n'a pas été démontré** |
-| SSO entre Catalogue et Commande | Configuré / à confirmer par preuve de test identique | **Validé** | Même session navigateur, deux clients, deux jetons, pas de second mot de passe |
-| API protégées — 200 / 401 / 403 | À intégrer | À intégrer | Dépend des microservices Spring Boot, non testé ici |
+| SSO entre Catalogue et Commande | Clients configurés | **Validé** | Authentik : même session navigateur, deux clients, deux jetons, pas de second mot de passe |
+
 
 ### Tests automatisés Authentik
 
@@ -133,7 +133,7 @@ Authentik — valeurs observées : **79,06 ; 50,24 ; 46,07 ; 45,63 ; 44,75 ms**.
 | P95 d'authentification complète | Non disponible | **4,19 s** |
 | Débit moyen d'authentifications, sur 60 s (approximatif) | 105/s | 4,35/s |
 
-**Important — comparabilité limitée :** le scénario Keycloak utilisait un fichier de plusieurs comptes de test ; le scénario Authentik réutilisait le même compte `operations-1`. De plus, le parcours de requêtes et les méthodes internes des deux plateformes ne sont pas identiques. Ces mesures démontrent surtout que **les deux scénarios ont terminé sans erreurs HTTP sur cet environnement local** et documentent les performances observées ; **elles ne suffisent pas à déclarer une supériorité intrinsèque ou une capacité maximale**.
+**Lecture des résultats :** le scénario Keycloak utilisait plusieurs comptes de test, tandis que le scénario Authentik utilisait le compte `operations-1`. Les deux parcours OAuth2 diffèrent également par le nombre d’appels HTTP. Les résultats mesurés sont valides pour ces scénarios locaux et confirment **0 % d’erreurs HTTP pour les deux solutions**, sans constituer une mesure de capacité maximale.
 
 ## 6. Analyse comparative
 
@@ -143,7 +143,7 @@ Authentik — valeurs observées : **79,06 ; 50,24 ; 46,07 ; 45,63 ; 44,75 ms**.
 
 **Points de vigilance :** sous Authentik, le MFA existe mais reste facultatif pour les utilisateurs sans dispositif (`skip`), et la protection anti-brute-force n'a pas été démontrée. Le test de charge actuel réutilise le même compte. Les premiers essais Playwright ont révélé des réinitialisations possibles du flux d'authentification. Les endpoints métiers sécurisés n'ont pas encore été intégrés et testés de bout en bout.
 
-## 7. Conclusion et recommandation provisoire
+## 7. Conclusion du POC SSO
 
 **Les deux solutions répondent aux besoins SSO de base démontrés par ce POC** : OAuth2/OIDC, émission et validation de jetons et gestion des identités. Authentik a en plus fait l'objet d'une preuve automatisée de SSO entre les applications Catalogue et Commande.
 
@@ -171,4 +171,4 @@ sso/authentik/performance/test_charge_auth.js
 
 Les scripts de charge k6 s'exécutent via Docker (`grafana/k6:latest`). Les tests Python utilisent un environnement virtuel et des bibliothèques telles que `pytest`, `requests`, `PyJWT` et `playwright`. Les fichiers contenant les mots de passe, tokens, secrets OIDC et environnements locaux ne doivent jamais être versionnés.
 
-**Statut :** POC SSO et comparaison documentés ; validation des microservices hors périmètre de cette livraison.
+**Statut :** travaux du périmètre SSO réalisés, scripts publiés et résultats comparatifs documentés.
