@@ -1,0 +1,12 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    container_name: collector-keycloak
+    command: start-dev --import-realm
+    ports:
+      - "127.0.0.1:8081:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Définir KEYCLOAK_ADMIN_PASSWORD}
+    volumes:
+      - ./config:/opt/keycloak/data/import:ro

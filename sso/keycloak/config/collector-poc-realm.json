@@ -1,0 +1,100 @@
+{
+  "realm": "collector-poc",
+  "enabled": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "SALES"
+      },
+      {
+        "name": "OPERATIONS"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "catalogue-client",
+      "name": "Catalogue POC",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "https://oauth.pstmn.io/v1/callback"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "catalogue-audience",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ]
+    },
+    {
+      "clientId": "commande-client",
+      "name": "Commande POC",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "https://oauth.pstmn.io/v1/callback"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "commande-audience",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ]
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "catalogue-audience",
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "name": "catalogue-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "catalogue-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "name": "commande-audience",
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "name": "commande-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "commande-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ]
+}
