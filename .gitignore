@@ -8,3 +8,7 @@ __pycache__/
 *.token
 *.jwt
 **/backup/
+**/target/
+**/node_modules/
+.env
+.env.*

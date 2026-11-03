@@ -1,0 +1,17 @@
+services:
+  spring-gateway:
+    build:
+      context: ./gateway-spring
+      dockerfile: Dockerfile
+    container_name: spring-gateway
+    ports:
+      - "127.0.0.1:8003:8080"
+    restart: unless-stopped
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    depends_on:
+      - redis
+  redis:
+    image: redis:7-alpine
+    container_name: spring-gateway-redis

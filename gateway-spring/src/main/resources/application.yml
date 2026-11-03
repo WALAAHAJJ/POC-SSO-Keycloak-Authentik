@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: collector-gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: catalogue-router
+              uri: http://host.docker.internal:8081
+              predicates:
+                - Path=/api/products,/api/products/**
+              filters:
+                - StripPrefix=1
+                # - name: RequestRateLimiter
+                #   args:
+                #     key-resolver: "#{@globalKeyResolver}"
+                #     redis-rate-limiter.replenishRate: 5
+                #     redis-rate-limiter.burstCapacity: 5
+                #     redis-rate-limiter.requestedTokens: 1
+
+            - id: commande-router
+              uri: http://host.docker.internal:8082
+              predicates:
+                - Path=/api/commandes,/api/commandes/**
+              filters:
+                - StripPrefix=1
+
+            - id: paiement-router
+              uri: http://host.docker.internal:8083
+              predicates:
+                - Path=/api/paiements,/api/paiements/**
+              filters:
+                - StripPrefix=1
+
+            - id: notification-router
+              uri: http://host.docker.internal:8084
+              predicates:
+                - Path=/api/notifications,/api/notifications/**
+              filters:
+                - StripPrefix=1

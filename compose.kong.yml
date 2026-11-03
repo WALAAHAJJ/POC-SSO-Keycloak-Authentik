@@ -1,0 +1,14 @@
+services:
+  kong:
+    image: kong:3.9
+    container_name: kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_PROXY_LISTEN: "0.0.0.0:8000"
+      KONG_ADMIN_LISTEN: "0.0.0.0:8001"
+    ports:
+      - "127.0.0.1:8002:8000"
+      - "127.0.0.1:8004:8001"
+    volumes:
+      - "./gateway-kong/kong.yml:/etc/kong/kong.yml:ro"

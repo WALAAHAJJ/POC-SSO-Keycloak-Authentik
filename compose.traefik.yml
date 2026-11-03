@@ -1,0 +1,12 @@
+services:
+  traefik:
+    image: traefik:v3.6.2
+    container_name: traefik
+    command:
+      - --configFile=/etc/traefik/traefik.yml
+    ports:
+      - "127.0.0.1:8001:80"
+      - "127.0.0.1:8088:8080"
+    volumes:
+      - "./gateway-traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
+      - "./gateway-traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro"
