@@ -21,7 +21,6 @@ public class CommandeRepository {
         return new ArrayList<>(orders.values());
     }
 
-    /** Attribue un identifiant à la commande puis la range en mémoire. */
     public Commande save(Commande order) {
         Commande saved = new Commande(
                 sequence.incrementAndGet(),
@@ -29,8 +28,15 @@ public class CommandeRepository {
                 order.productName(),
                 order.quantity(),
                 order.totalPrice(),
-                order.createdAt());
+                order.createdAt(),
+                order.status());
         orders.put(saved.id(), saved);
         return saved;
+    }
+
+    public Commande updateStatus(Long id, String status) {
+        return orders.computeIfPresent(id, (k, c) -> new Commande(
+                c.id(), c.productId(), c.productName(), c.quantity(),
+                c.totalPrice(), c.createdAt(), status));
     }
 }

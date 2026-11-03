@@ -10,5 +10,6 @@ public record Commande(
         String productName,
         int quantity,
         BigDecimal totalPrice,
-        Instant createdAt) {
+        Instant createdAt,
+        String status) {
 }
