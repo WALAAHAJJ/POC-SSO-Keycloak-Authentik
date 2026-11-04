@@ -14,8 +14,8 @@ Python 3.8+, **aucune dépendance à installer** (bibliothèque standard uniquem
 
 ## Lancer (terminal de l'IDE, à la racine du dépôt)
 
-    python tests/resilience/scenario_a_coupure_consommateur.py
-    python tests/resilience/scenario_b_coupure_broker.py
+    python test-brokerMsg/scenario_a_coupure_consommateur.py
+    python test-brokerMsg/scenario_b_coupure_broker.py
 
 Dans IntelliJ : clic droit sur le fichier > *Run* (ou configuration « Python » avec le dossier de travail
 à la racine du dépôt). Options : `--count 10` (nombre de commandes), `--interval 2` (pause en secondes).
