@@ -21,16 +21,16 @@ public class CommandeController {
     private final CommandeRepository repository;
     private final CatalogClient catalogClient;
     private final PaiementClient paiementClient;
-    private final NotificationClient notificationClient;
+    private final CommandeNotifier notifier;
 
     public CommandeController(CommandeRepository repository,
                               CatalogClient catalogClient,
                               PaiementClient paiementClient,
-                              NotificationClient notificationClient) {
+                              CommandeNotifier notifier) {
         this.repository = repository;
         this.catalogClient = catalogClient;
         this.paiementClient = paiementClient;
-        this.notificationClient = notificationClient;
+        this.notifier = notifier;
     }
 
     @GetMapping
@@ -59,13 +59,11 @@ public class CommandeController {
         boolean paye = "ACCEPTE".equals(paiement.status());
         Commande result = repository.updateStatus(saved.id(), paye ? "PAYEE" : "PAIEMENT_REFUSE");
 
-        // 4. Appel HTTP vers le notification-service (n'empêche pas la commande si ça échoue)
-        String message = "Commande n°%d : %s x%d (%s)".formatted(
-                saved.id(), product.name(), request.quantity(), result.status());
-        notificationClient.envoyer(
-                request.customerEmail(),
-                paye ? "Commande confirmée" : "Paiement refusé",
-                message);
+        // 4. Notification : appel HTTP ou événement Kafka selon poc.messaging.broker
+        //    (n'empêche pas la commande si ça échoue)
+        notifier.commandeTraitee(new CommandeEvent(
+                saved.id(), request.customerEmail(), product.name(),
+                request.quantity(), total, result.status(), Instant.now()));
 
         return result;
     }
